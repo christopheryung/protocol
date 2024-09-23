@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -29,27 +30,28 @@ func main() {
   if err != nil {
     log.Fatal(err)
   }
+
+  log.Println("Server is listening on", listener.Addr())
   server.ListenAndServe(listener)
 }
 
 func newServer(addr net.Addr, username []byte, password []byte, tcpTimeout int, udpTimeout int) *Server {
-  s := &Server{
+  return &Server{
     ServerAddr: addr,
     Username: username,
     Password: password,
     TCPTimeout: tcpTimeout,
     UDPTimeout: udpTimeout,
   }
-  return s
 }
 
 func (s *Server) ListenAndServe(listener net.Listener) error {
   for {
     conn, err := listener.Accept()
     if err != nil {
-      return err
+      log.Println(err)
+      continue
     }
-
     go s.handle(conn)
   }
 
@@ -58,91 +60,90 @@ func (s *Server) ListenAndServe(listener net.Listener) error {
 func (s *Server) negotiateAndAuth(conn net.Conn) error {
   req, err := socks5.NewNegotiationRequestFrom(conn)
   if err != nil {
-    conn.Close()
-    log.Fatal(err)
+    return err
   }
   
+  var methodSelected byte
   for _, meth := range req.Methods {
-    if meth == socks5.MethodNone {
-      resp := socks5.NewNegotiationReply(socks5.MethodNone)
-      _, err = resp.WriteTo(conn)
-      if err != nil {
-        conn.Close()
-        log.Fatal(err)
-      }
+    if meth == socks5.MethodUsernamePassword {
+      methodSelected = socks5.MethodUsernamePassword
+      break
     }
-  } 
- 
-  resp := socks5.NewNegotiationReply(socks5.MethodUsernamePassword)
-  _, err = resp.WriteTo(conn)
-  if err != nil {
-    conn.Close()
-    log.Fatal(err)
+  }
+
+  resp := socks5.NewNegotiationReply(methodSelected)
+  if _, err = resp.WriteTo(conn); err != nil {
+    return err
   }
 
   authReq, err := socks5.NewUserPassNegotiationRequestFrom(conn)
   if err != nil {
-    conn.Close()
-    log.Fatal(err)
+    return err
   }
 
   // develop auth function later
   if slices.Equal(authReq.Uname, s.Username) && slices.Equal(authReq.Passwd, s.Password) {
     authResp := socks5.NewUserPassNegotiationReply(socks5.UserPassStatusSuccess)
     _, err := authResp.WriteTo(conn)
-    if err != nil {
-      log.Fatal(err)
-      return err
-    }
+    return err
   } else {
     authResp := socks5.NewUserPassNegotiationReply(socks5.UserPassStatusFailure)
     _, err := authResp.WriteTo(conn)
-    log.Fatal(err)
     return err
   }
-  return nil
 }
 
 func (s *Server) handle(conn net.Conn) {
-  s.negotiateAndAuth(conn)
+  if err := s.negotiateAndAuth(conn); err != nil {
+    log.Println("Auth failed: ", err)
+    return
+  }
 
   req, err := socks5.NewRequestFrom(conn)
   if err != nil {
-    conn.Close()
-    log.Fatal()
+    log.Println("Error reading request: ", err)
   }
 
+  fmt.Println(req.Cmd)
   switch req.Cmd {
   case socks5.CmdConnect:
+    fmt.Println("God TCP request")
     s.handleTCP(conn, req)
+  case socks5.CmdUDP:
+    fmt.Println("Got UDP request")
+  default:
+    log.Println("Unsupported command")
+    resp := socks5.NewReply(socks5.RepCommandNotSupported, socks5.ATYPIPv4, []byte{0, 0, 0, 0}, []byte{0, 0})
+    resp.WriteTo(conn)
   }
 
 }
 
 func (s *Server) handleTCP(conn net.Conn, req *socks5.Request) {
-
   destConn, err := net.Dial("tcp", req.Address())
   if err != nil {
-    log.Fatal(err)
+    log.Println("Error connectin to dest", err)
+    resp := socks5.NewReply(socks5.RepHostUnreachable, socks5.ATYPIPv4, []byte{0, 0, 0, 0}, []byte{0, 0})
+    resp.WriteTo(conn)
+    return
   }
-
   defer destConn.Close()
 
   resp := socks5.NewReply(socks5.RepSuccess, socks5.ATYPIPv4, []byte{0x00, 0x00, 0x00, 0x00}, []byte{0x00, 0x00})
-
   if _, err := resp.WriteTo(conn); err != nil {
-    log.Fatal(err)
+    log.Println("Error sending reply", err)
+    return
   }
 
   go func() {
     _, err := io.Copy(destConn, conn)
     if err != nil {
-      log.Fatal(err)
+      log.Println("Error cp to dst", err)
     }
   }()
 
   _, err = io.Copy(conn, destConn)
   if err != nil {
-    log.Fatal(err)
+    log.Println("Error cp to client", err)
   }
 }

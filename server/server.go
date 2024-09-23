@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"io"
 	"log"
 	"net"
 	"slices"
@@ -9,50 +9,58 @@ import (
 	"github.com/txthinking/socks5"
 )
 
-type SocksServer struct {
-  Addr string
+type Server struct {
+  ServerAddr net.Addr
   Username []byte
   Password []byte
+  TCPTimeout int
+  UDPTimeout int
 }
 
+
 func main() {
-  server := newSocksServer("5.42.99.137:10100", []byte("test"), []byte("test"))
+  serverAddr, err := net.ResolveTCPAddr("tcp", "5.42.99.137:10100")
+  if err != nil {
+    log.Fatal(err)
+  }
+  server := newServer(serverAddr, []byte("test"), []byte("test"), 0, 0)
+
   listener, err := net.Listen("tcp", "0.0.0.0:10100")
   if err != nil {
     log.Fatal(err)
   }
-  defer listener.Close()
-
   server.ListenAndServe(listener)
 }
 
-func newSocksServer(addr string, username []byte, password []byte) *SocksServer {
-  s := &SocksServer{
-    Addr: addr,
+func newServer(addr net.Addr, username []byte, password []byte, tcpTimeout int, udpTimeout int) *Server {
+  s := &Server{
+    ServerAddr: addr,
     Username: username,
     Password: password,
+    TCPTimeout: tcpTimeout,
+    UDPTimeout: udpTimeout,
   }
   return s
 }
 
-func (s *SocksServer) ListenAndServe(listener net.Listener) error {
+func (s *Server) ListenAndServe(listener net.Listener) error {
   for {
     conn, err := listener.Accept()
     if err != nil {
-      log.Fatal(err)
+      return err
     }
 
-    s.negotiateAndAuth(conn)
+    go s.handle(conn)
   }
+
 }
 
-func (s *SocksServer) negotiateAndAuth(conn net.Conn) error {
+func (s *Server) negotiateAndAuth(conn net.Conn) error {
   req, err := socks5.NewNegotiationRequestFrom(conn)
   if err != nil {
     conn.Close()
     log.Fatal(err)
   }
-  fmt.Println("neg req:", req)
   
   for _, meth := range req.Methods {
     if meth == socks5.MethodNone {
@@ -71,14 +79,13 @@ func (s *SocksServer) negotiateAndAuth(conn net.Conn) error {
     conn.Close()
     log.Fatal(err)
   }
-  fmt.Println("neg resp", resp) 
 
   authReq, err := socks5.NewUserPassNegotiationRequestFrom(conn)
   if err != nil {
     conn.Close()
     log.Fatal(err)
   }
-  fmt.Println("auth req:", authReq)
+
   // develop auth function later
   if slices.Equal(authReq.Uname, s.Username) && slices.Equal(authReq.Passwd, s.Password) {
     authResp := socks5.NewUserPassNegotiationReply(socks5.UserPassStatusSuccess)
@@ -93,6 +100,49 @@ func (s *SocksServer) negotiateAndAuth(conn net.Conn) error {
     log.Fatal(err)
     return err
   }
-
   return nil
+}
+
+func (s *Server) handle(conn net.Conn) {
+  s.negotiateAndAuth(conn)
+
+  req, err := socks5.NewRequestFrom(conn)
+  if err != nil {
+    conn.Close()
+    log.Fatal()
+  }
+
+  switch req.Cmd {
+  case socks5.CmdConnect:
+    s.handleTCP(conn, req)
+  }
+
+}
+
+func (s *Server) handleTCP(conn net.Conn, req *socks5.Request) {
+
+  destConn, err := net.Dial("tcp", req.Address())
+  if err != nil {
+    log.Fatal(err)
+  }
+
+  defer destConn.Close()
+
+  resp := socks5.NewReply(socks5.RepSuccess, socks5.ATYPIPv4, []byte{0x00, 0x00, 0x00, 0x00}, []byte{0x00, 0x00})
+
+  if _, err := resp.WriteTo(conn); err != nil {
+    log.Fatal(err)
+  }
+
+  go func() {
+    _, err := io.Copy(destConn, conn)
+    if err != nil {
+      log.Fatal(err)
+    }
+  }()
+
+  _, err = io.Copy(conn, destConn)
+  if err != nil {
+    log.Fatal(err)
+  }
 }

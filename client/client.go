@@ -15,6 +15,7 @@ func main() {
   if err != nil {
     log.Fatal(err)
   }
+
   fmt.Println(conn)
 }
 
@@ -50,7 +51,6 @@ func negotiateAndAuth(dialer net.Dialer) (net.Conn, error) {
       return nil, err
     }
 
-    fmt.Println(resp)
     if resp.Status != socks5.UserPassStatusSuccess {
       conn.Close()
       return nil, socks5.ErrUserPassAuth

@@ -48,6 +48,7 @@ func newServer(addr net.Addr, username []byte, password []byte, tcpTimeout int, 
 func (s *Server) ListenAndServe(listener net.Listener) error {
   for {
     conn, err := listener.Accept()
+    defer conn.Close()
     if err != nil {
       log.Println(err)
       continue
@@ -122,7 +123,7 @@ func (s *Server) handle(conn net.Conn) {
 func (s *Server) handleTCP(conn net.Conn, req *socks5.Request) {
   destConn, err := net.Dial("tcp", req.Address())
   if err != nil {
-    log.Println("Error connectin to dest", err)
+    log.Println("Error connecting to dest", err)
     resp := socks5.NewReply(socks5.RepHostUnreachable, socks5.ATYPIPv4, []byte{0, 0, 0, 0}, []byte{0, 0})
     resp.WriteTo(conn)
     return

@@ -1,0 +1,6 @@
+stages:
+  - test
+
+test-job:
+    stage: test
+    script: echo "test job is running"

@@ -4,4 +4,5 @@ stages:
 test-job:
     stage: test
     script: echo "test job is running"
-    tags: proxy
+    tags:
+      - proxy

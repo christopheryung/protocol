@@ -26,7 +26,7 @@ run-server-job:
 curl-job:
   stage: test
   script:
-    - expected_output = $(curl --socks5 5.42.99.137:10100 -U test:test 2ip.ru)
+    - expected_output=$(curl --socks5 5.42.99.137:10100 -U test:test 2ip.ru)
     - |
       if [ "$expected_output" = "5.42.99.137" ]; then
         echo "Success"

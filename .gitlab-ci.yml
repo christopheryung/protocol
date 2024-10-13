@@ -17,7 +17,7 @@ run-server-job:
   stage: test
   script:
     - echo "test job is running"
-    - ./proxy/socks5/binaries/server PID=$!; sleep 10; kill $PID
+    - timeout 10 ./proxy/socks5/binaries/server
   dependencies:
     - build-job
   tags:

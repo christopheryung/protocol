@@ -4,8 +4,6 @@ stages:
 test-job:
     stage: test
     script:
-      - cd ~/server/
-      - go build server.go
-      - ./server
+      - pwd
     tags:
       - proxy

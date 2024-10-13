@@ -4,7 +4,7 @@ stages:
 test-job:
     stage: test
     script:
-      - go build proxy/socks5/server.go
-      - ./server
+      - go cd proxy/socks5
+      - go build server.go
     tags:
       - proxy

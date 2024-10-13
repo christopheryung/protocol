@@ -18,6 +18,8 @@ run-server-job:
   script:
     - echo "test job is running"
     - ./proxy/socks5/binaries/server
+    - sleep 10
+    - pkill server
   dependencies:
     - build-job
   tags:
@@ -26,9 +28,9 @@ run-server-job:
 curl-job:
   stage: test
   script:
-    - expected_output=$(curl --socks5 5.42.99.137:10100 -U test:test 2ip.ru)
+    - output=$(curl --socks5 5.42.99.137:10100 -U test:test 2ip.ru)
     - |
-      if [ "$expected_output" = "5.42.99.137" ]; then
+      if [ "$output" = "5.42.99.137" ]; then
         echo "Success"
       else
         echo "IP address doesn't match expected value"

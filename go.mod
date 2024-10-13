@@ -1,6 +1,6 @@
 module github.com/christopheryung/protocol
 
-go 1.23.0
+go 1.21.0
 
 require github.com/txthinking/socks5 v0.0.0-20230325130024-4230056ae301
 

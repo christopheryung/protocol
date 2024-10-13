@@ -6,5 +6,6 @@ test-job:
     script:
       - cd proxy/socks5
       - go build server.go
+      - ./server
     tags:
       - proxy

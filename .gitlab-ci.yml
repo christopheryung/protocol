@@ -17,7 +17,7 @@ run-server-job:
   stage: test
   script:
     - echo "test job is running"
-    - timeout 30 ./proxy/socks5/binaries/server || exit 0
+    - timeout 60 ./proxy/socks5/binaries/server || exit 0
   dependencies:
     - build-job
   tags:

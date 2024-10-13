@@ -11,12 +11,12 @@ build-job:
       - proxy
     artifacts:
       paths:
-        - binaries/server
+        - proxy/socks5/binaries/server
 
 test-job:
   stage: test
   script:
     - echo "test job is running"
-    - ls binaries/
+    - ls proxy/socks5/binaries/
   dependencies:
     - build-job

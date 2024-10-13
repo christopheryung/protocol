@@ -6,7 +6,7 @@ build-job:
     stage: build
     script:
       - cd proxy/socks5
-      - go build binaries/ server.go
+      - go build -o binaries/ server.go
     tags:
       - proxy
     artifacts:

@@ -13,10 +13,17 @@ build-job:
       paths:
         - proxy/socks5/binaries/server
 
-test-job:
+run-server-job:
   stage: test
   script:
     - echo "test job is running"
-    - ls proxy/socks5/binaries/
+    - ./proxy/socks5/binaries/server
   dependencies:
     - build-job
+  tags:
+    - proxy
+
+curl-job:
+  stage: test
+  script:
+    - curl --socks5 5.42.99.137:10100 -U test:test 2ip.ru

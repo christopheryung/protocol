@@ -1,11 +1,22 @@
 stages:
+  - build
   - test
 
-test-job:
-    stage: test
+build-job:
+    stage: build
     script:
       - cd proxy/socks5
-      - go build server.go
-      - ./server
+      - go build binaries/ server.go
     tags:
       - proxy
+    artifacts:
+      paths:
+        - binaries/server
+
+test-job:
+  stage: test
+  script:
+    - echo "test job is running"
+    - ls binaries/
+  dependencies:
+    - build-job

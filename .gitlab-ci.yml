@@ -37,12 +37,12 @@ curl-job:
   dependencies:
     - run-server-job
 
-job_with_secrets:
+read_secrets:
+  image: hashicorp/vault:latest
   id_tokens:
-    VAULT_ID_TOKEN:
+    VAULT_AUTH_TOKEN:
       aud: https://gitlab.com
-  secrets:
-    SECRET:
-      vault: secret/gitlab/ip@secrets # authenticates using $VAULT_ID_TOKEN
   script:
-    - echo "$SECRET"
+    - export VAULT_ADDR=$VAULT_SERVER_URL
+    - export VAULT_TOKEN=$VAULT_TOKEN
+    - export PASSWORD="$(vault kv get -field=password secret/gitlab/ip)"

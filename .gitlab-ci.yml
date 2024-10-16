@@ -40,7 +40,7 @@ curl-job:
 read_secrets:
   image: hashicorp/vault:latest
   id_tokens:
-    VAULT_AUTH_TOKEN:
+    VAULT_TOKEN:
       aud: https://gitlab.com
   script:
     - export VAULT_ADDR=$VAULT_SERVER_URL

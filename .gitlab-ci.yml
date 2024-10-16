@@ -45,4 +45,4 @@ job_with_secrets:
     secret:
       vault: secret/gitlab/ip@secrets # authenticates using $VAULT_ID_TOKEN
   script:
-    - echo "Hiii"
+    - echo "Hi"

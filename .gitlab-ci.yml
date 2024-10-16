@@ -45,4 +45,4 @@ job_with_secrets:
     STAGING_DB_PASSWORD:
       vault: secret/gitlab@secrets # authenticates using $VAULT_ID_TOKEN
   script:
-    - echo "Hi"
+    - echo "Hiii"

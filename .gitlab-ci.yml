@@ -42,7 +42,7 @@ job_with_secrets:
     VAULT_ID_TOKEN:
       aud: https://gitlab.com
   secrets:
-    STAGING_DB_PASSWORD:
-      vault: secret/gitlab@secrets # authenticates using $VAULT_ID_TOKEN
+    secret:
+      vault: secret/gitlab/ip@secrets # authenticates using $VAULT_ID_TOKEN
   script:
     - echo "Hiii"

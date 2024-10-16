@@ -36,3 +36,13 @@ curl-job:
       fi
   dependencies:
     - run-server-job
+
+job_with_secrets:
+  id_tokens:
+    VAULT_ID_TOKEN:
+      aud: https://gitlab.com
+  secrets:
+    STAGING_DB_PASSWORD:
+      vault: secret/gitlab@secrets # authenticates using $VAULT_ID_TOKEN
+  script:
+    - echo "Hi"

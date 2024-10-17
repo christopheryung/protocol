@@ -38,7 +38,7 @@ curl-job:
   dependencies:
     - run-server-job
 
-deploy:
+deploy-job:
   stage: deploy
   image: vault:latest
   id_tokens:
@@ -51,4 +51,4 @@ deploy:
         "${VAULT_ADDR}/v1/auth/jwt/login" | jq -r '.auth.client_token')
       export VAULT_TOKEN
     - SECRET=$(vault kv get -field=ip secret/gitlab)
-    - echo "Retrieved secret: $SECRET"
+    - echo $SECRET

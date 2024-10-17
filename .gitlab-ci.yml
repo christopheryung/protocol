@@ -39,9 +39,17 @@ curl-job:
 
 deploy:
   stage: deploy
+  image: vault:latest
+  id_tokens:
+    VAULT_ID_TOKEN:
+      aud: https://gitlab.com
   script:
-    - echo "Authenticating to Vault..."
-    - export VAULT_TOKEN=$(vault write -format=json auth/jwt/login role=gitlab-role jwt=$JWT_TOKEN | jq -r .auth.client_token)
-    - echo "Accessing secrets from Vault..."
-    - export SECRET=$(vault kv get -field=ip secret/data/gitlab)
-    - echo "The secret is: $SECRET"
+    - apt-get update && apt-get install -y jq curl
+    - |
+      VAULT_TOKEN=$(curl -s -H "Authorization: Bearer $VAULT_ID_TOKEN" \
+        "${VAULT_ADDR}/v1/auth/jwt/login" | jq -r '.auth.client_token')
+      export VAULT_TOKEN
+    - SECRET=$(vault kv get -field=ip secret/gitlab)
+    - echo "Retrieved secret: $SECRET"
+  only:
+    - main

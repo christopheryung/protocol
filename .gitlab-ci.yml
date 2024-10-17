@@ -40,12 +40,12 @@ curl-job:
 
 test-job:
   stage: test
-  image: vault:1.13.3
+  image: hashicorp/vault:latest
   id_tokens:
     VAULT_ID_TOKEN:
       aud: https://gitlab.com
   script:
-    - apt-get update && apt-get install -y jq curl
+    - apk update && apk add --no-cache jq curl
     - |
       VAULT_TOKEN=$(curl -s -H "Authorization: Bearer $VAULT_ID_TOKEN" \
         "${VAULT_ADDR}/v1/auth/jwt/login" | jq -r '.auth.client_token')

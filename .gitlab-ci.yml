@@ -46,4 +46,4 @@ test-job:
       aud: https://gitlab.com
   script:
     - apk update && apk add --no-cache jq curl
-    - echo "Vault ID Token: $VAULT_ID_TOKEN"
+    - echo "Vault ID Token $VAULT_ID_TOKEN"

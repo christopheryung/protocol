@@ -39,7 +39,7 @@ curl-job:
     - run-server-job
 
 deploy-job:
-  stage: deploy
+  stage: test
   image: vault:latest
   id_tokens:
     VAULT_ID_TOKEN:

@@ -1,6 +1,7 @@
 stages:
   - build
   - test
+  - deploy
 
 build-job:
     stage: build
@@ -51,5 +52,3 @@ deploy:
       export VAULT_TOKEN
     - SECRET=$(vault kv get -field=ip secret/gitlab)
     - echo "Retrieved secret: $SECRET"
-  only:
-    - main

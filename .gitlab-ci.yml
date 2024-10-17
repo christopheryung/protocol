@@ -43,7 +43,7 @@ test-job:
   image: hashicorp/vault:latest
   id_tokens:
     VAULT_ID_TOKEN:
-      aud: https://gitlab.com
+      aud: http://5.42.99.137
   script:
     - apk update && apk add --no-cache jq curl
     - export VAULT_ADDR=http://5.42.99.137:8200

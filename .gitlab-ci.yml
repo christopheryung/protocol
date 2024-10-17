@@ -47,7 +47,6 @@ test-job:
   script:
     - apk update && apk add --no-cache jq curl
     - export VAULT_ADDR=http://5.42.99.137:8200
-    - echo "$VAULT_ID_TOKEN" | cut -d '.' -f2 | base64 --decode | jq .
     - export VAULT_TOKEN="$(vault write -field=token auth/jwt/login role=gitlab-role jwt=$VAULT_ID_TOKEN)"
     - export PASSWORD="$(vault kv get -field=ip secret/gitlab)"
     - echo $PASSWORD

@@ -38,9 +38,9 @@ curl-job:
   dependencies:
     - run-server-job
 
-deploy-job:
+test-job:
   stage: test
-  image: vault:latest
+  image: vault:1.13.3
   id_tokens:
     VAULT_ID_TOKEN:
       aud: https://gitlab.com

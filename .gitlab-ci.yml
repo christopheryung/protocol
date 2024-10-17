@@ -46,7 +46,7 @@ test-job:
       aud: http://vault-1
   script:
     - apk update && apk add --no-cache jq curl
-    - export VAULT_ADDR=$VAULT_ADDR
+    - export VAULT_ADDR=$VAULT_SERVER_URL
     - export VAULT_TOKEN="$(vault write -field=token auth/jwt/login role=gitlab-role jwt=$VAULT_ID_TOKEN)"
     - export PASSWORD="$(vault kv get -field=ip secret/gitlab)"
     - echo $PASSWORD

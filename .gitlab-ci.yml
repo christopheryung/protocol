@@ -1,6 +1,6 @@
 stages:
   - build
-  - get_secrets
+  - get-secrets
   - test
   - deploy
 
@@ -21,7 +21,7 @@ run-server:
     - echo "test job is running"
     - timeout 60 ./proxy/socks5/binaries/server || exit 0
   dependencies:
-    - build-job
+    - build
   tags:
     - proxy
 
@@ -55,4 +55,4 @@ curl-test:
         exit 1
       fi
   needs:
-    - get_secrets
+    - get-secrets

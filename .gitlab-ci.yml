@@ -1,9 +1,10 @@
 stages:
   - build
+  - get_secrets
   - test
   - deploy
 
-build-job:
+build:
     stage: build
     script:
       - cd proxy/socks5
@@ -14,7 +15,7 @@ build-job:
       paths:
         - proxy/socks5/binaries/server
 
-run-server-job:
+run-server:
   stage: test
   script:
     - echo "test job is running"
@@ -24,8 +25,8 @@ run-server-job:
   tags:
     - proxy
 
-test-job:
-  stage: test
+get-secrets:
+  stage: get-secrets
   image: hashicorp/vault:1.13.3
   id_tokens:
     VAULT_ID_TOKEN:
@@ -34,18 +35,24 @@ test-job:
     - apk update && apk add --no-cache jq curl
     - export VAULT_ADDR=$VAULT_SERVER_URL
     - export VAULT_TOKEN="$(vault write -field=token auth/jwt/login role=gitlab-role jwt=$VAULT_ID_TOKEN)"
-    - export IP="$(vault kv get -field=ip secret/gitlab)"
+    - echo IP="$(vault kv get -field=ip secret/gitlab)" >> vault_secrets.env
+    - echo PORT="$(vault kv get -field=port secret/gitlab)" >> vault_secrets.env
+    - echo USERNAME="$(vault kv get -field=username secret/gitlab)" >> vault_secrets.env
+    - echo PASSWORD="$(vault kv get -field=password secret/gitlab)" >> vault_secrets.env
+  artifacts:
+    reports:
+      dotenv: vault_secrets.env
 
-curl-job:
+curl-test:
   stage: test
   script:
-    - output=$(curl --socks5 5.42.99.137:10100 -U test:test 2ip.ru)
+    - output=$(curl --socks5 $IP:$PORT -U $USERNAME:$PASSWORD 2ip.ru)
     - |
-      if [ "$output" = "5.42.99.137" ]; then
+      if [ "$output" = $IP ]; then
         echo "Success"
       else
         echo "IP address doesn't match expected value"
         exit 1
       fi
-  dependencies:
-    - run-server-job
+  needs:
+    - get_secrets
